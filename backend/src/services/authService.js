@@ -1,23 +1,17 @@
 // services/authService.js
-const User = require('../models/userSchema');
+const User = require('../../models/userSchema');
+const AppError = require('../utils/AppError'); // 🌟 Import
 
-/**
- * Registers a user with validated, pre-formatted data fields.
- * @param {Object} userData - Contains sanitized username, email, and password.
- * @returns {Promise<Object>} The newly created user object without password field.
- */
 exports.registerNewUser = async ({ username, email, password }) => {
-  // Domain validation: verify target email is unique
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    throw new Error('Email already exists');
+    // 🌟 Instantly communicates a 400 Bad Request to the error middleware
+    throw new AppError('A user with that email already exists.', 400); 
   }
 
-  // Persist schema to MongoDB
   const newUser = new User({ username, email, password });
-  await newUser.save();
+  await newUser.save(); // If Mongo throws a 11000 duplicate error, it bubbles up cleanly
 
-  // Strip secure credentials from database model object output
   const userObj = newUser.toObject();
   delete userObj.password;
   
