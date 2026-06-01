@@ -5,7 +5,7 @@ const authRouter = require('./routes/authRoutes');
 const userRouter = require('./routes/userRoutes');
 const cors = require('cors');
 const PORT = process.env.PORT || 5000;
-const errorHandler = require('./middlewares/errorHandler');
+const errorHandler = require('./middleware/errorHandler');
 
 // Enable CORS for all routes (adjust as needed for production)
 app.use(cors());
