@@ -86,3 +86,4 @@ exports.deleteUser = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Error deleting user' });
   }
 };
+// Note: Authentication and authorization logic should be implemented in middleware and applied to routes as needed, rather than directly in the controller methods.
