@@ -54,6 +54,59 @@ exports.registerUser = async (req, res) => {
   }
 };
 
+exports.loginUser = async (req, res) => {
+  try {
+    const body = req.body || {};
+    const query = req.query || {};
+    const combinedData = { ...query, ...body };
+
+    const { email: rawEmail, password } = combinedData;
+    const email = (rawEmail || '').toLowerCase().trim();
+
+    // Fast-fail: Required input validation
+    if (!email || !password) {
+      return res.status(400).json({ 
+        message: 'Email and password are required.', 
+        receivedKeys: Object.keys(combinedData), 
+        expectedKeys: ['email', 'password'],
+        note: 'Send data as JSON body with Content-Type: application/json, or as query parameters' 
+      });
+    }
+
+    // Delegate verification and token signing to the Service Layer
+    const authData = await authService.authenticateUser({ email, password });
+    return res.status(200).json(authData);
+
+  } catch (err) {
+    console.error('Login processing error:', err);
+
+    // Security practice: Return a generic "Incorrect email or password" error
+    if (err.message === 'Invalid credentials') {
+      return res.status(400).json({ message: 'Incorrect email or password.' });
+    }
+
+    return res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+exports.logoutUser = async (req, res) => {
+  try {
+    // If you use cookies, clear them here:
+    // res.clearCookie('token'); 
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Logged out successfully.' 
+    });
+  } catch (err) {
+    console.error('Logout processing error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error during logout' 
+    });
+  }
+};
+
 exports.methodNotAllowed = (req, res) => {
   return res.status(405).json({ 
     success: false, 
