@@ -1,5 +1,5 @@
 // services/authService.js
-const User = require('../../models/userSchema');
+const User = require('../models/userSchema');
 const AppError = require('../utils/AppError'); // 🌟 Import
 
 exports.registerNewUser = async ({ username, email, password }) => {
