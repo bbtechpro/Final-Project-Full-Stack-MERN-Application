@@ -2,6 +2,10 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
+// Map logout endpoint to controller action
+router.post('/logout', authController.logoutUser);
+router.all('/logout', authController.methodNotAllowed);
+
 
 // Map clean auth endpoints to controller handlers
 router.post('/register', authController.registerUser);
