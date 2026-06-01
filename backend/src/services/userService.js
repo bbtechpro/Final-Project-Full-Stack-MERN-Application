@@ -1,5 +1,5 @@
 // services/userService.js
-const User = require('../../models/userSchema');
+const User = require('../models/userSchema');
 
 exports.fetchAllUsers = async () => {
   return await User.find().select('-password');
