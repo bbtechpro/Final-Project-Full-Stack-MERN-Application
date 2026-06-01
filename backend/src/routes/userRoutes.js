@@ -4,8 +4,8 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 
 // Mount sub-routers early to avoid /:id conflicts
-router.use('/register', require('../../api/users/register'));
-router.use('/login', require('../../api/users/login'));
+router.use('/register', require('./register'));
+router.use('/login', require('./login'));
 
 // Route definitions mapped directly to controllers
 router.get('/', userController.getAllUsers);
