@@ -1,5 +1,6 @@
 // services/userService.js
 const User = require('../models/userSchema');
+const AppError = require('../utils/AppError'); // Import the AppError class
 
 exports.fetchAllUsers = async () => {
   return await User.find().select('-password');
@@ -9,7 +10,7 @@ exports.createNewUser = async ({ username, email, password }) => {
   // Business/Domain Rule Validation
   const existingUser = await User.findOne({ $or: [{ email }, { username }] });
   if (existingUser) {
-    throw new Error('User already exists');
+    throw new AppError('User already exists');
   }
 
   const newUser = new User({ username, email, password });
