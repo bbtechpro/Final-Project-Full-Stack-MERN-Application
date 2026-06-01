@@ -38,5 +38,27 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   // SUCCESS: Grant access and attach the user record to the request object
   req.user = currentUser;
+  
   next();
 });
+
+// Higher-order function to restrict access based on roles
+exports.restrictTo = (...allowedRoles) => {
+  return (req, res, next) => {
+    // 1. Double check that protect middleware ran first
+    if (!req.user) {
+      return next(new AppError('Authentication context missing. Run protect middleware first.', 500));
+    }
+
+    // 2. Check if the logged-in user's role is included in the allowedRoles array
+    if (!allowedRoles.includes(req.user.role)) {
+      // 403 Forbidden means authenticated, but explicitly lacks authorization clearance
+      return next(new AppError('You do not have permission to perform this action.', 403));
+    }
+
+    // 3. User has the correct role, proceed to the controller
+    next();
+  };
+};
+
+
