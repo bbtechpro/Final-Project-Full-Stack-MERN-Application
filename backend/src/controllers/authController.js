@@ -57,6 +57,6 @@ exports.registerUser = async (req, res) => {
 exports.methodNotAllowed = (req, res) => {
   return res.status(405).json({ 
     success: false, 
-    message: 'Method not allowed. Use POST /api/users/register.' 
+    message: `Method ${req.method} not allowed on this endpoint.` 
   });
 };
