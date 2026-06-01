@@ -1,10 +1,10 @@
 // controllers/authController.js
 const authService = require('../services/authService');
+const catchAsync = require('../utils/catchAsync'); 
 
-exports.registerUser = async (req, res) => {
-  try {
-    const body = req.body || {};
-    const query = req.query || {};
+exports.registerUser = catchAsync(async (req, res) => {
+  const body = req.body || {};
+  const query = req.query || {};
     const combinedData = { ...query, ...body };
 
     console.log('Register route hit:', req.method, req.originalUrl, 'content-type=', req.headers['content-type'], 'body=', body, 'query=', query, 'combined=', combinedData);
@@ -51,14 +51,12 @@ exports.registerUser = async (req, res) => {
     }
 
     return res.status(500).json({ message: 'Server error', error: err.message });
-  }
-};
+  };
 
-exports.loginUser = async (req, res) => {
-  try {
-    const body = req.body || {};
-    const query = req.query || {};
-    const combinedData = { ...query, ...body };
+exports.loginUser = catchAsync(async (req, res) => {
+  const body = req.body || {};
+  const query = req.query || {};
+  const combinedData = { ...query, ...body };
 
     const { email: rawEmail, password } = combinedData;
     const email = (rawEmail || '').toLowerCase().trim();
@@ -86,10 +84,9 @@ exports.loginUser = async (req, res) => {
     }
 
     return res.status(500).json({ message: 'Server error', error: err.message });
-  }
-};
+  };  
 
-exports.logoutUser = async (req, res) => {
+exports.logoutUser = catchAsync(async (req, res) => {
   try {
     // If you use cookies, clear them here:
     // res.clearCookie('token'); 
@@ -105,7 +102,7 @@ exports.logoutUser = async (req, res) => {
       message: 'Server error during logout' 
     });
   }
-};
+});
 
 exports.methodNotAllowed = (req, res) => {
   return res.status(405).json({ 
