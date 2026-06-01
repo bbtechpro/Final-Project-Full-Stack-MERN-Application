@@ -1,5 +1,5 @@
 // services/authService.js
-const User = require('../../models/userSchema');
+const User = require('../models/userSchema');
 
 /**
  * Registers a user with validated, pre-formatted data fields.
