@@ -20,6 +20,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   if (!token) {
     throw new AppError('You are not logged in. Please log in to get access.', 401);
   }
+console.log('Token found:', token);
 
   // 3. Verify the token signature against your server environment secret
   // Note: jwt.verify is typically callback-based, so we wrap it or use util.promisify
@@ -29,6 +30,7 @@ exports.protect = catchAsync(async (req, res, next) => {
       resolve(payload);
     });
   });
+  console.log('Decoded token payload:', decoded);
 
   // 4. Check if the user associated with the token still exists in MongoDB
   const currentUser = await User.findById(decoded._id || decoded.id);
