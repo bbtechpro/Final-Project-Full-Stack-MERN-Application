@@ -3,46 +3,44 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/userSchema');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
+const util = require('util'); // 🌟 Node.js built-in utility
 
 exports.protect = catchAsync(async (req, res, next) => {
   let token;
 
-  // 1. Check if the token arrives via the Authorization Header (Bearer Token)
+  // 1. Extract the token from auth headers or cookies
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    token = req.headers.authorization.split(' ')[1];
-  } 
-  // 2. Fallback: Check if the token arrives via an HTTP-Only Cookie
-  else if (req.cookies && req.cookies.token) {
+    token = req.headers.authorization.split(' ')[1]; // 🌟 Ensure index [1] to grab only the hash string
+  } else if (req.cookies && req.cookies.token) {
     token = req.cookies.token;
   }
 
-  // If no token is found, block access immediately
   if (!token) {
     throw new AppError('You are not logged in. Please log in to get access.', 401);
   }
-console.log('Token found:', token);
 
-  // 3. Verify the token signature against your server environment secret
-  // Note: jwt.verify is typically callback-based, so we wrap it or use util.promisify
-  const decoded = await new Promise((resolve, reject) => {
-    jwt.verify(token, process.env.JWT_SECRET, (err, payload) => {
-      if (err) return reject(new AppError('Invalid or expired token. Please log in again.', 401));
-      resolve(payload);
-    });
-  });
-  console.log('Decoded token payload:', decoded);
+  // 2. Safely verify token using a clean async wrapper instead of "new Promise"
+  // This forces any secret mismatch or expiration errors to immediately go to your global handler
+  const verifyJwt = util.promisify(jwt.verify);
+  const decoded = await verifyJwt(token, process.env.JWT_SECRET);
 
-  // 4. Check if the user associated with the token still exists in MongoDB
-  const currentUser = await User.findById(decoded._id || decoded.id);
+  // console.log('🔍 Decoded inside updated protect:', decoded);
+
+  // 3. Confirm target database user account exists (Checking both id and _id formats)
+  const targetId = decoded.id || decoded._id;
+  const currentUser = await User.findById(targetId);
+  
   if (!currentUser) {
     throw new AppError('The user belonging to this token no longer exists.', 401);
   }
 
-  // SUCCESS: Grant access and attach the user record to the request object
+  // 4. Attach identity information for controllers down the pipeline
   req.user = currentUser;
-  
-  next();
+
+  // 5. Move forward safely
+  next(); 
 });
+
 
 // Higher-order function to restrict access based on roles
 exports.restrictTo = (...allowedRoles) => {
