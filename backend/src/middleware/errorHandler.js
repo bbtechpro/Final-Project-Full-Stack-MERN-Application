@@ -1,4 +1,4 @@
-// middlewares/errorHandler.js
+// middleware/errorHandler.js
 const errorHandler = (err, req, res, next) => {
   console.error('Global Error Intercepted:', err);
 
