@@ -18,7 +18,7 @@ exports.createNewProject = async ({ name, description, userId }) => {
     description,
     user: userId // Map ownership to the requesting user
   });
-  // console.log('Step 3: New project instance created:', newProject); // Confirm instance creation before save
+  console.log('Step 3: New project instance created:', newProject); // Confirm instance creation before save
   await newProject.save();
   console.log('Step 4: Project saved to DB with ID:', newProject._id); // Confirm DB save and ID assignment
   return newProject;
