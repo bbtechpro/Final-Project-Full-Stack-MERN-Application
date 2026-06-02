@@ -38,9 +38,8 @@ exports.loginUser = catchAsync(async (req, res) => {
     const body = req.body || {};
     const query = req.query || {};
     const combinedData = { ...query, ...body };
-
-    const { email: rawEmail, password } = combinedData;
-    const email = (rawEmail || '').toLowerCase().trim();
+    const { email, password } = req.body || {};
+    console.log('Login route hit:', req.method, req.originalUrl, 'content-type=', req.headers['content-type'], 'body=', body, 'query=', query, 'combined=', combinedData);
 
     // Fast-fail: Required input validation
     if (!email || !password) {
@@ -53,7 +52,8 @@ exports.loginUser = catchAsync(async (req, res) => {
     }
 
     // Delegate verification and token signing to the Service Layer
-    const authData = await authService.authenticateUser({ email, password });
+    console.log('Attempting authentication for email:', email);
+    const authData = await authService.authenticateUser(email, password);
     return res.status(200).json(authData);
 });
 
