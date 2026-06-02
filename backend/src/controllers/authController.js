@@ -35,6 +35,7 @@ exports.registerUser = catchAsync(async (req, res) => {
 });
 
 exports.loginUser = catchAsync(async (req, res) => {
+    console.log('Login Payload Received:', req.body); // Trace if the body is arriving empty
     const body = req.body || {};
     const query = req.query || {};
     const combinedData = { ...query, ...body };
