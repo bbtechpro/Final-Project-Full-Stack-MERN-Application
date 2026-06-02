@@ -17,11 +17,11 @@ exports.getProjectById = catchAsync(async (req, res) => {
 });
 
 exports.createProject = catchAsync(async (req, res) => {
-  // console.log('Step 1: Received project creation request with body:', req.body); // Debug log to trace incoming data
+  console.log('Step 1: Received project creation request with body:', req.body); // Debug log to trace incoming data
   // console.log(req.validatedBody); // Confirm that validation middleware is populating this field correctly
   const { name, description } = req.body || {};
 
-  // console.log('Step 1.5: Validated body extracted:', { name, description }); // Confirm validation output
+  console.log('Step 1.5: Validated body extracted:', { name, description }); // Confirm validation output
   if (!name || !description) {
     throw new AppError('Project name and description are required', 400);
   }
