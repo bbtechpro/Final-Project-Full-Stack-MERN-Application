@@ -1,19 +1,34 @@
-import { useState } from 'react'
-import './App.css'
+// src/App.tsx
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
-function App() {
-  const [count, setCount] = useState(0)
+// View Components Imports
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
 
+const App: React.FC = () => {
   return (
-    <>
-      <section id="center">
-        
-      <h1>Welcome to the MERN Project Management App</h1>
-      <p>Use the navigation to explore projects, create new ones, and manage your tasks efficiently.</p>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Authentication Views */}
+          <Route path="/login" element={<Login />} />
+          
+          {/* Protected Application Workspaces */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
 
-      </section>
-    </>
-  )
-}
+          {/* Catch-all Routing Strategy */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+};
 
-export default App
+export default App;
