@@ -4,7 +4,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ConfirmModal } from '../components/ConfirmModal';
 import apiClient from '../services/apiClient';
-import type { Project } from '../interfaces';
+import type { Project, Task } from '../interfaces';
+
+interface TaskSummary {
+  total: number;
+  todo: number;
+  inProgress: number;
+  done: number;
+}
 
 export const Dashboard: React.FC = () => {
   const auth = useContext(AuthContext);
@@ -14,6 +21,7 @@ export const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [taskSummaries, setTaskSummaries] = useState<Record<string, TaskSummary>>({});
 
   // Create modal state
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -44,8 +52,29 @@ export const Dashboard: React.FC = () => {
     try {
       setLoading(true);
       const res = await apiClient.get<{ success: boolean; data: Project[] }>('/projects');
-      setProjects(res.data.data);
+      const loadedProjects = res.data.data;
+      setProjects(loadedProjects);
       setError('');
+
+      // Fetch task summaries for all projects in parallel
+      const summaryEntries = await Promise.all(
+        loadedProjects.map(async (project) => {
+          try {
+            const taskRes = await apiClient.get<Task[]>(`/projects/${project._id}/tasks`);
+            const tasks = taskRes.data;
+            const summary: TaskSummary = {
+              total: tasks.length,
+              todo: tasks.filter((t) => t.status === 'To Do').length,
+              inProgress: tasks.filter((t) => t.status === 'In Progress').length,
+              done: tasks.filter((t) => t.status === 'Done').length,
+            };
+            return [project._id, summary] as const;
+          } catch {
+            return [project._id, { total: 0, todo: 0, inProgress: 0, done: 0 }] as const;
+          }
+        })
+      );
+      setTaskSummaries(Object.fromEntries(summaryEntries));
     } catch {
       setError('Failed to load projects');
     } finally {
@@ -119,11 +148,27 @@ export const Dashboard: React.FC = () => {
     try {
       await apiClient.delete(`/projects/${deleteProjectId}`);
       setProjects((prev) => prev.filter((p) => p._id !== deleteProjectId));
+      const newSummaries = { ...taskSummaries };
+      delete newSummaries[deleteProjectId];
+      setTaskSummaries(newSummaries);
       setShowDeleteConfirm(false);
       setDeleteProjectId(null);
     } catch {
       setError('Failed to delete project');
     }
+  };
+
+  const getDeleteWarningMessage = (): string => {
+    if (!deleteProjectId) return '';
+    const summary = taskSummaries[deleteProjectId];
+    if (!summary || summary.total === 0) {
+      return 'Are you sure you want to delete this project? This action cannot be undone.';
+    }
+    const incomplete = summary.todo + summary.inProgress;
+    if (incomplete > 0) {
+      return `⚠️ This project has ${incomplete} incomplete task${incomplete !== 1 ? 's' : ''} (${summary.todo} To Do, ${summary.inProgress} In Progress). Deleting this project will remove all ${summary.total} task${summary.total !== 1 ? 's' : ''}. This action cannot be undone.`;
+    }
+    return `This project has ${summary.total} completed task${summary.total !== 1 ? 's' : ''}. Deleting this project will remove all tasks. This action cannot be undone.`;
   };
 
   const formatDate = (dateStr: string) => {
@@ -205,50 +250,102 @@ export const Dashboard: React.FC = () => {
           </div>
         ) : (
           <div className="project-grid">
-            {projects.map((project) => (
-              <div
-                key={project._id}
-                className="card"
-                onClick={() => navigate(`/projects/${project._id}`)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') navigate(`/projects/${project._id}`);
-                }}
-              >
-                <div className="card-header">
-                  <h3 className="card-title">{project.name}</h3>
-                </div>
-                <p className="card-description">{project.description}</p>
-                <div className="card-footer">
-                  <span className="card-meta">
-                    Created {formatDate(project.createdAt)}
-                  </span>
-                  <div className="card-actions">
-                    <button
-                      id={`edit-project-${project._id}`}
-                      className="btn btn-secondary btn-sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEditModal(project);
-                      }}
-                    >
-                      ✏️ Edit
-                    </button>
-                    <button
-                      id={`delete-project-${project._id}`}
-                      className="btn btn-danger btn-sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openDeleteConfirm(project._id);
-                      }}
-                    >
-                      🗑️ Delete
-                    </button>
+            {projects.map((project) => {
+              const summary = taskSummaries[project._id];
+              const hasTasks = summary && summary.total > 0;
+              return (
+                <div
+                  key={project._id}
+                  className="card"
+                  onClick={() => navigate(`/projects/${project._id}`)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') navigate(`/projects/${project._id}`);
+                  }}
+                >
+                  <div className="card-header">
+                    <h3 className="card-title">{project.name}</h3>
+                  </div>
+                  <p className="card-description">{project.description}</p>
+
+                  {/* Task status summary */}
+                  {hasTasks ? (
+                    <div className="card-task-summary">
+                      <div className="task-progress-bar">
+                        {summary.done > 0 && (
+                          <div
+                            className="task-progress-segment task-progress-done"
+                            style={{ width: `${(summary.done / summary.total) * 100}%` }}
+                          />
+                        )}
+                        {summary.inProgress > 0 && (
+                          <div
+                            className="task-progress-segment task-progress-in-progress"
+                            style={{ width: `${(summary.inProgress / summary.total) * 100}%` }}
+                          />
+                        )}
+                        {summary.todo > 0 && (
+                          <div
+                            className="task-progress-segment task-progress-todo"
+                            style={{ width: `${(summary.todo / summary.total) * 100}%` }}
+                          />
+                        )}
+                      </div>
+                      <div className="task-status-counts">
+                        {summary.todo > 0 && (
+                          <span className="task-count task-count-todo">
+                            {summary.todo} To Do
+                          </span>
+                        )}
+                        {summary.inProgress > 0 && (
+                          <span className="task-count task-count-in-progress">
+                            {summary.inProgress} In Progress
+                          </span>
+                        )}
+                        {summary.done > 0 && (
+                          <span className="task-count task-count-done">
+                            {summary.done} Done
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="card-no-tasks-hint">
+                      <span>📋</span> Click to add your first task
+                    </div>
+                  )}
+
+                  <div className="card-footer">
+                    <span className="card-meta">
+                      Created {formatDate(project.createdAt)}
+                    </span>
+                    <div className="card-actions">
+                      <button
+                        id={`edit-project-${project._id}`}
+                        className="btn btn-secondary btn-sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditModal(project);
+                        }}
+                      >
+                        ✏️ Edit
+                      </button>
+                      <button
+                        id={`delete-project-${project._id}`}
+                        className="btn btn-danger btn-sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openDeleteConfirm(project._id);
+                        }}
+                      >
+                        🗑️ Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -369,7 +466,7 @@ export const Dashboard: React.FC = () => {
       <ConfirmModal
         isOpen={showDeleteConfirm}
         title="Delete Project"
-        message="Are you sure you want to delete this project? This action cannot be undone."
+        message={getDeleteWarningMessage()}
         confirmLabel="Delete"
         variant="danger"
         onConfirm={handleDeleteProject}
