@@ -10,9 +10,9 @@ const validateProjectCreation = (req, res, next) => {
   // This function will be implemented in the middleware file
 };  
 
-// Public Endpoints
-router.get('/', projectController.getAllProjects);
-router.get('/:id', projectController.getProjectById);
+// Protected Endpoints (user must be logged in to see their projects)
+router.get('/', protect, projectController.getAllProjects);
+router.get('/:id', protect, projectController.getProjectById);
 
 // Protected Endpoints (Requires Login)
 // Note: We inject the 'protect' middleware to automatically populate req.user

@@ -2,13 +2,14 @@
 const { Project } = require('../models/projectSchema');
 const AppError = require('../utils/AppError');
 
-exports.fetchAllProjects = async () => {
-  // Populate fetches basic user info while keeping sensitive fields secure
-  return await Project.find().populate('user', 'username email');
+exports.fetchAllProjects = async (userId) => {
+  // Only return projects owned by the requesting user
+  return await Project.find({ user: userId }).populate('user', 'username email');
 };
 
-exports.fetchProjectById = async (id) => {
-  return await Project.findById(id).populate('user', 'username email');
+exports.fetchProjectById = async (id, userId) => {
+  // Only return the project if it belongs to the requesting user
+  return await Project.findOne({ _id: id, user: userId }).populate('user', 'username email');
 };
 
 exports.createNewProject = async ({ name, description, userId }) => {
