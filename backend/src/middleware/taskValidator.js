@@ -3,17 +3,17 @@ const { z } = require('zod');
 
 // 1. Define the reusable Zod Task Schema shape
 const taskCreateSchema = z.object({
-  title: z.string({ required_error: 'Task title is required.' })
+  title: z.string({ error: 'Task title is required.' })
     .min(3, 'Task title must be at least 3 characters long.')
     .trim(),
     
-  description: z.string({ required_error: 'Task description is required.' })
+  description: z.string({ error: 'Task description is required.' })
     .min(5, 'Task description must be at least 5 characters long.')
     .trim(),
 
   // Enforce the strict Mongoose enum array constraint
   status: z.enum(['To Do', 'In Progress', 'Done'], {
-    errorMap: () => ({ message: "Status must be exactly 'To Do', 'In Progress', or 'Done'." })
+    error: "Status must be exactly 'To Do', 'In Progress', or 'Done'."
   }).default('To Do')
 });
 
@@ -29,7 +29,7 @@ const validateTaskCreation = (req, res, next) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ 
         success: false, 
-        messages: error.errors.map(err => err.message) 
+        messages: error.issues.map(err => err.message) 
       });
     }
     next(error);
@@ -45,7 +45,7 @@ const validateTaskUpdate = (req, res, next) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ 
         success: false, 
-        messages: error.errors.map(err => err.message) 
+        messages: error.issues.map(err => err.message) 
       });
     }
     next(error);

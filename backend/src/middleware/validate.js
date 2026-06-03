@@ -1,16 +1,16 @@
 // middleware/validate.js
 const { z } = require('zod');
 
-// 1. Define the shape of a valid registration payload
+// 1. Define the shape of a valid registration payload (Zod v4 syntax)
 const registerSchema = z.object({
-  username: z.string({ required_error: 'Username is required' })
+  username: z.string({ error: 'Username is required' })
     .min(3, 'Username must be at least 3 characters long')
     .trim(),
-  email: z.string({ required_error: 'Email is required' })
+  email: z.string({ error: 'Email is required' })
     .email('Invalid email format')
     .trim()
     .toLowerCase(),
-  password: z.string({ required_error: 'Password is required' })
+  password: z.string({ error: 'Password is required' })
     .min(8, 'Password must be at least 8 characters long'),
 });
 
@@ -36,7 +36,8 @@ const validateRegistration = (req, res, next) => {
   } catch (error) {
     if (error instanceof z.ZodError) {
       // Extract clean error messages to send back to client
-      const errorMessages = error.errors.map(err => err.message);
+      // Zod v4 uses .issues instead of .errors
+      const errorMessages = error.issues.map(err => err.message);
       return res.status(400).json({ 
         success: false, 
         messages: errorMessages 
