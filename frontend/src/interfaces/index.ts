@@ -30,6 +30,6 @@ export interface Task {
 }
 
 export interface AuthResponse {
-  accessToken: string;
+  token: string;
   user: User;
 }
