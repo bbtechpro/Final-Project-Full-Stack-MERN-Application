@@ -3,10 +3,11 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { AuthPage } from './pages/AuthPage';
+import { Dashboard } from './pages/Dashboard';
+import { ProjectPage } from './pages/ProjectPage';
+import './App.css'; // Global styles and resets
 
-// View Components Imports
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
 
 const App: React.FC = () => {
   return (
@@ -14,8 +15,15 @@ const App: React.FC = () => {
       <BrowserRouter>
         <Routes>
           {/* Public Authentication Views */}
-          <Route path="/login" element={<Login />} />
-          
+          <Route path="/login" element={<AuthPage defaultMode="login" />} />
+          <Route path="/auth" element={<AuthPage defaultMode="login" />} />
+          <Route path="/register" element={<AuthPage defaultMode="register" />} />
+          <Route path="/projects/:projectId" element={
+            <ProtectedRoute>
+              <ProjectPage />
+            </ProtectedRoute>
+          } />
+
           {/* Protected Application Workspaces */}
           <Route path="/dashboard" element={
             <ProtectedRoute>
