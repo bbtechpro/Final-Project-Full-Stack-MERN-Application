@@ -1,6 +1,6 @@
 // src/context/AuthContext.tsx
 import React, { createContext, useState, useEffect } from 'react';
-import { User, AuthResponse } from '../interfaces';
+import type { User, AuthResponse } from '../interfaces/index';
 import apiClient from '../services/apiClient';
 
 interface AuthContextType {
@@ -18,27 +18,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const bootstrapAuth = async () => {
-      const token = localStorage.getItem('accessToken');
-      if (token) {
-        try {
-          // Attempt token refresh on first page mount to pull state context safely
-          const res = await axios.post('http://localhost:5000/api/auth/refresh', {}, { withCredentials: true });
-          localStorage.setItem('accessToken', res.data.accessToken);
-          // Assuming an optional endpoint to fetch current profile details
-          // const profile = await apiClient.get('/users/me'); 
-        } catch {
-          localStorage.removeItem('accessToken');
-        }
+    const storedUser = localStorage.getItem('authUser');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch {
+        localStorage.removeItem('authUser');
       }
-      setLoading(false);
-    };
-    bootstrapAuth();
+    }
+    setLoading(false);
   }, []);
 
   const login = async (credentials: object) => {
     const res = await apiClient.post<AuthResponse>('/auth/login', credentials);
-    localStorage.setItem('accessToken', res.data.accessToken);
+    localStorage.setItem('token', res.data.token);
+    localStorage.setItem('authUser', JSON.stringify(res.data.user));
     setUser(res.data.user);
   };
 
@@ -48,7 +42,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     await apiClient.post('/auth/logout');
-    localStorage.removeItem('accessToken');
+    localStorage.removeItem('token');
+    localStorage.removeItem('authUser');
     setUser(null);
   };
 
