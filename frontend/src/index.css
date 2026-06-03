@@ -334,6 +334,104 @@ a:hover { color: var(--accent-primary-hover); }
   cursor: pointer;
 }
 
+/* --- Task summary on project cards --- */
+.card-task-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0.25rem;
+}
+
+.task-progress-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background-color: var(--bg-tertiary);
+  gap: 2px;
+}
+
+.task-progress-segment {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.task-progress-done {
+  background-color: var(--accent-success);
+}
+
+.task-progress-in-progress {
+  background-color: var(--accent-warning);
+}
+
+.task-progress-todo {
+  background-color: #6366f1;
+}
+
+.task-status-counts {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.task-count {
+  font-size: 0.72rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.task-count::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.task-count-todo {
+  color: #818cf8;
+}
+.task-count-todo::before {
+  background-color: #6366f1;
+}
+
+.task-count-in-progress {
+  color: var(--accent-warning);
+}
+.task-count-in-progress::before {
+  background-color: var(--accent-warning);
+}
+
+.task-count-done {
+  color: var(--accent-success);
+}
+.task-count-done::before {
+  background-color: var(--accent-success);
+}
+
+.card-no-tasks-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0.25rem;
+  padding: 0.6rem 0.85rem;
+  background-color: rgba(99, 102, 241, 0.08);
+  border: 1px dashed rgba(99, 102, 241, 0.25);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-style: italic;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.card:hover .card-no-tasks-hint {
+  background-color: rgba(99, 102, 241, 0.12);
+  color: var(--text-secondary);
+}
+
 /* ==========================================
    7. PROJECT GRID
    ========================================== */
