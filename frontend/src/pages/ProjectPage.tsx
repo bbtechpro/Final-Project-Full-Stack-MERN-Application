@@ -53,7 +53,6 @@ export const ProjectPage: React.FC = () => {
   const [editProjectLoading, setEditProjectLoading] = useState(false);
 
   // Delete confirms
-  const [showDeleteProject, setShowDeleteProject] = useState(false);
   const [showDeleteTask, setShowDeleteTask] = useState(false);
   const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null);
 
@@ -203,14 +202,6 @@ export const ProjectPage: React.FC = () => {
     }
   };
 
-  const handleDeleteProject = async () => {
-    try {
-      await apiClient.delete(`/projects/${projectId}`);
-      navigate('/dashboard');
-    } catch {
-      setError('Failed to delete project');
-    }
-  };
 
   const getMoveLabel = (status: TaskStatus): string => {
     switch (status) {
@@ -325,13 +316,6 @@ export const ProjectPage: React.FC = () => {
               onClick={openEditProject}
             >
               ✏️ Edit Project
-            </button>
-            <button
-              id="delete-project-btn"
-              className="btn btn-danger btn-sm"
-              onClick={() => setShowDeleteProject(true)}
-            >
-              🗑️ Delete Project
             </button>
             <button
               id="add-task-btn"
@@ -615,17 +599,6 @@ export const ProjectPage: React.FC = () => {
           setShowDeleteTask(false);
           setDeleteTaskId(null);
         }}
-      />
-
-      {/* Delete Project Confirm */}
-      <ConfirmModal
-        isOpen={showDeleteProject}
-        title="Delete Project"
-        message="Are you sure you want to delete this project and all its tasks? This action cannot be undone."
-        confirmLabel="Delete Project"
-        variant="danger"
-        onConfirm={handleDeleteProject}
-        onCancel={() => setShowDeleteProject(false)}
       />
     </div>
   );
