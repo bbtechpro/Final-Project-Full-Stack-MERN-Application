@@ -4,12 +4,12 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
 
 exports.getAllProjects = catchAsync(async (req, res) => {
-  const projects = await projectService.fetchAllProjects();
+  const projects = await projectService.fetchAllProjects(req.user._id);
   return res.status(200).json({ success: true, data: projects });
 });
 
 exports.getProjectById = catchAsync(async (req, res) => {
-  const project = await projectService.fetchProjectById(req.params.id);
+  const project = await projectService.fetchProjectById(req.params.id, req.user._id);
   if (!project) {
     throw new AppError('Project not found', 404);
   }
