@@ -5,7 +5,7 @@ const { z } = require('zod');
 const htmlSanitizeRegex = /<[^>]*>/g;
 
 const projectCreateSchema = z.object({
-  name: z.string({ required_error: 'Project name is required.' })
+  name: z.string({ error: 'Project name is required.' })
     .min(3, 'Project name must be at least 3 characters long.')
     .max(50, 'Project name cannot exceed 50 characters.')
     .trim()
@@ -13,7 +13,7 @@ const projectCreateSchema = z.object({
       message: 'Project name cannot contain HTML or script tags.'
     }),
     
-  description: z.string({ required_error: 'Project description is required.' })
+  description: z.string({ error: 'Project description is required.' })
     .min(10, 'Project description must be at least 10 characters long.')
     .max(1000, 'Project description cannot exceed 1000 characters.')
     .trim()
@@ -43,7 +43,7 @@ const validateProjectCreation = (req, res, next) => {
 
     if (error instanceof z.ZodError) {
       // Collect all validation issues into an array and return an immediate response
-      const errorMessages = error.errors.map(err => err.message);
+      const errorMessages = error.issues.map(err => err.message);
       return res.status(400).json({ 
         success: false, 
         messages: errorMessages 
