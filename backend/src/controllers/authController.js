@@ -7,8 +7,6 @@ exports.registerUser = catchAsync(async (req, res) => {
     const query = req.query || {};
     const combinedData = { ...query, ...body };
 
-    console.log('Register route hit:', req.method, req.originalUrl, 'content-type=', req.headers['content-type'], 'body=', body, 'query=', query, 'combined=', combinedData);
-
     // Normalize incoming input fields from varying keys/casings
     const username = combinedData.username || combinedData.Username || combinedData.userName;
     const email = (combinedData.email || combinedData.Email || '').toLowerCase().trim();
@@ -35,12 +33,10 @@ exports.registerUser = catchAsync(async (req, res) => {
 });
 
 exports.loginUser = catchAsync(async (req, res) => {
-    console.log('Login Payload Received:', req.body); // Trace if the body is arriving empty
     const body = req.body || {};
     const query = req.query || {};
     const combinedData = { ...query, ...body };
     const { email, password } = req.body || {};
-    console.log('Login route hit:', req.method, req.originalUrl, 'content-type=', req.headers['content-type'], 'body=', body, 'query=', query, 'combined=', combinedData);
 
     // Fast-fail: Required input validation
     if (!email || !password) {
