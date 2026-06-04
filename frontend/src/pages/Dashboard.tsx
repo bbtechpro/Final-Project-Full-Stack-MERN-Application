@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ConfirmModal } from '../components/ConfirmModal';
 import apiClient from '../services/apiClient';
-import type { Project, Task } from '../interfaces';
+import type { Project, Task, ProjectStatus } from '../interfaces';
 
 interface TaskSummary {
   total: number;
@@ -12,6 +12,8 @@ interface TaskSummary {
   inProgress: number;
   done: number;
 }
+
+type FilterTab = 'active' | 'completed' | 'all';
 
 export const Dashboard: React.FC = () => {
   const auth = useContext(AuthContext);
@@ -22,6 +24,7 @@ export const Dashboard: React.FC = () => {
   const [error, setError] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [taskSummaries, setTaskSummaries] = useState<Record<string, TaskSummary>>({});
+  const [activeFilter, setActiveFilter] = useState<FilterTab>('active');
 
   // Create modal state
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -85,9 +88,9 @@ export const Dashboard: React.FC = () => {
   const handleLogout = async () => {
     try {
       await auth.logout();
-      navigate('/login');
+      navigate('/');
     } catch {
-      navigate('/login');
+      navigate('/');
     }
   };
 
@@ -158,6 +161,21 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  const handleToggleStatus = async (project: Project) => {
+    const newStatus: ProjectStatus = project.status === 'completed' ? 'active' : 'completed';
+    try {
+      const res = await apiClient.patch<{ success: boolean; data: Project }>(
+        `/projects/${project._id}/status`,
+        { status: newStatus }
+      );
+      setProjects((prev) =>
+        prev.map((p) => (p._id === project._id ? res.data.data : p))
+      );
+    } catch {
+      setError('Failed to update project status');
+    }
+  };
+
   const getDeleteWarningMessage = (): string => {
     if (!deleteProjectId) return '';
     const summary = taskSummaries[deleteProjectId];
@@ -166,7 +184,7 @@ export const Dashboard: React.FC = () => {
     }
     const incomplete = summary.todo + summary.inProgress;
     if (incomplete > 0) {
-      return `⚠️ This project has ${incomplete} incomplete task${incomplete !== 1 ? 's' : ''} (${summary.todo} To Do, ${summary.inProgress} In Progress). Deleting this project will remove all ${summary.total} task${summary.total !== 1 ? 's' : ''}. This action cannot be undone.`;
+      return `\u26a0\ufe0f This project has ${incomplete} incomplete task${incomplete !== 1 ? 's' : ''} (${summary.todo} To Do, ${summary.inProgress} In Progress). Deleting this project will remove all ${summary.total} task${summary.total !== 1 ? 's' : ''}. This action cannot be undone.`;
     }
     return `This project has ${summary.total} completed task${summary.total !== 1 ? 's' : ''}. Deleting this project will remove all tasks. This action cannot be undone.`;
   };
@@ -178,6 +196,148 @@ export const Dashboard: React.FC = () => {
       day: 'numeric',
     });
   };
+
+  const activeProjects = projects
+    .filter((p) => (p.status || 'active') === 'active')
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  const completedProjects = projects
+    .filter((p) => p.status === 'completed')
+    .sort((a, b) => new Date(b.completedAt || 0).getTime() - new Date(a.completedAt || 0).getTime());
+
+  const activeProjectsToRender = activeFilter === 'completed' ? [] : activeProjects;
+  const completedProjectsToRender = activeFilter === 'active' ? [] : completedProjects;
+
+  const activeCount = activeProjects.length;
+  const completedCount = completedProjects.length;
+
+  const totalMatching = activeProjectsToRender.length + completedProjectsToRender.length;
+  const showActiveSection = activeFilter !== 'completed' && (activeProjects.length > 0 || activeFilter === 'active');
+  const showCompletedSection = activeFilter !== 'active' && (completedProjects.length > 0 || activeFilter === 'completed');
+
+  const renderProjectCards = (projectList: Project[]) => (
+    <div className="project-grid">
+      {projectList.map((project) => {
+        const summary = taskSummaries[project._id];
+        const hasTasks = summary && summary.total > 0;
+        const isCompleted = project.status === 'completed';
+        return (
+          <div
+            key={project._id}
+            className={`card${isCompleted ? ' card-completed' : ''}`}
+            onClick={() => navigate(`/projects/${project._id}`)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') navigate(`/projects/${project._id}`);
+            }}
+          >
+            <div className="card-header">
+              <h3 className={`card-title${isCompleted ? ' text-strikethrough' : ''}`}>
+                {project.name}
+              </h3>
+              {isCompleted && (
+                <span className="badge badge-done">✓ Complete</span>
+              )}
+            </div>
+            <p className={`card-description${isCompleted ? ' text-strikethrough' : ''}`}>
+              {project.description}
+            </p>
+
+            {hasTasks ? (
+              <div className="card-task-summary">
+                <div className="task-progress-bar">
+                  {summary.done > 0 && (
+                    <div
+                      className="task-progress-segment task-progress-done"
+                      style={{ width: `${(summary.done / summary.total) * 100}%` }}
+                    />
+                  )}
+                  {summary.inProgress > 0 && (
+                    <div
+                      className="task-progress-segment task-progress-in-progress"
+                      style={{ width: `${(summary.inProgress / summary.total) * 100}%` }}
+                    />
+                  )}
+                  {summary.todo > 0 && (
+                    <div
+                      className="task-progress-segment task-progress-todo"
+                      style={{ width: `${(summary.todo / summary.total) * 100}%` }}
+                    />
+                  )}
+                </div>
+                <div className="task-status-counts">
+                  {summary.todo > 0 && (
+                    <span className="task-count task-count-todo">
+                      {summary.todo} To Do
+                    </span>
+                  )}
+                  {summary.inProgress > 0 && (
+                    <span className="task-count task-count-in-progress">
+                      {summary.inProgress} In Progress
+                    </span>
+                  )}
+                  {summary.done > 0 && (
+                    <span className="task-count task-count-done">
+                      {summary.done} Done
+                    </span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              !isCompleted && (
+                <div className="card-no-tasks-hint">
+                  <span>📋</span> Click this card to add your first task
+                </div>
+              )
+            )}
+
+            <div className="card-footer">
+              <span className="card-meta">
+                {isCompleted && project.completedAt
+                  ? `Completed ${formatDate(project.completedAt)}`
+                  : `Created ${formatDate(project.createdAt)}`}
+              </span>
+              <div className="card-actions">
+                <button
+                  id={`toggle-status-${project._id}`}
+                  className={`btn btn-sm ${isCompleted ? 'btn-secondary' : 'btn-success'}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleStatus(project);
+                  }}
+                >
+                  {isCompleted ? '↩️ Reopen' : '✅ Complete'}
+                </button>
+                {!isCompleted && (
+                  <button
+                    id={`edit-project-${project._id}`}
+                    className="btn btn-secondary btn-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEditModal(project);
+                    }}
+                  >
+                    ✏️ Edit
+                  </button>
+                )}
+                <button
+                  id={`delete-project-${project._id}`}
+                  className="btn btn-danger btn-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openDeleteConfirm(project._id);
+                  }}
+                >
+                  🗑️ Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 
   return (
     <div className="page-layout">
@@ -230,6 +390,31 @@ export const Dashboard: React.FC = () => {
           </button>
         </div>
 
+        {/* Filter Tabs */}
+        <div className="filter-tabs">
+          <button
+            id="filter-active-btn"
+            className={`filter-tab${activeFilter === 'active' ? ' filter-tab-active' : ''}`}
+            onClick={() => setActiveFilter('active')}
+          >
+            📂 In Progress ({activeCount})
+          </button>
+          <button
+            id="filter-completed-btn"
+            className={`filter-tab${activeFilter === 'completed' ? ' filter-tab-active' : ''}`}
+            onClick={() => setActiveFilter('completed')}
+          >
+            ✅ Completed ({completedCount})
+          </button>
+          <button
+            id="filter-all-btn"
+            className={`filter-tab${activeFilter === 'all' ? ' filter-tab-active' : ''}`}
+            onClick={() => setActiveFilter('all')}
+          >
+            All ({projects.length})
+          </button>
+        </div>
+
         {error && <div className="alert alert-error">{error}</div>}
 
         {loading ? (
@@ -237,116 +422,66 @@ export const Dashboard: React.FC = () => {
             <div className="loading-spinner" />
             <p className="loading-text">Loading projects...</p>
           </div>
-        ) : projects.length === 0 ? (
+        ) : totalMatching === 0 ? (
           <div className="empty-state">
-            <p>No projects yet. Create your first project to get started!</p>
-            <button
-              id="empty-new-project-btn"
-              className="btn btn-primary"
-              onClick={() => setShowCreateModal(true)}
-            >
-              + Create Project
-            </button>
+            {activeFilter === 'completed' ? (
+              <p>No completed projects yet. Mark a project complete to build your history.</p>
+            ) : activeFilter === 'active' ? (
+              <p>No active projects right now. Create one or reopen a completed project.</p>
+            ) : (
+              <>
+                <p>No projects yet. Create your first project to get started!</p>
+                <button
+                  id="empty-new-project-btn"
+                  className="btn btn-primary"
+                  onClick={() => setShowCreateModal(true)}
+                >
+                  + Create Project
+                </button>
+              </>
+            )}
           </div>
         ) : (
-          <div className="project-grid">
-            {projects.map((project) => {
-              const summary = taskSummaries[project._id];
-              const hasTasks = summary && summary.total > 0;
-              return (
-                <div
-                  key={project._id}
-                  className="card"
-                  onClick={() => navigate(`/projects/${project._id}`)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') navigate(`/projects/${project._id}`);
-                  }}
-                >
-                  <div className="card-header">
-                    <h3 className="card-title">{project.name}</h3>
-                  </div>
-                  <p className="card-description">{project.description}</p>
-
-                  {/* Task status summary */}
-                  {hasTasks ? (
-                    <div className="card-task-summary">
-                      <div className="task-progress-bar">
-                        {summary.done > 0 && (
-                          <div
-                            className="task-progress-segment task-progress-done"
-                            style={{ width: `${(summary.done / summary.total) * 100}%` }}
-                          />
-                        )}
-                        {summary.inProgress > 0 && (
-                          <div
-                            className="task-progress-segment task-progress-in-progress"
-                            style={{ width: `${(summary.inProgress / summary.total) * 100}%` }}
-                          />
-                        )}
-                        {summary.todo > 0 && (
-                          <div
-                            className="task-progress-segment task-progress-todo"
-                            style={{ width: `${(summary.todo / summary.total) * 100}%` }}
-                          />
-                        )}
-                      </div>
-                      <div className="task-status-counts">
-                        {summary.todo > 0 && (
-                          <span className="task-count task-count-todo">
-                            {summary.todo} To Do
-                          </span>
-                        )}
-                        {summary.inProgress > 0 && (
-                          <span className="task-count task-count-in-progress">
-                            {summary.inProgress} In Progress
-                          </span>
-                        )}
-                        {summary.done > 0 && (
-                          <span className="task-count task-count-done">
-                            {summary.done} Done
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="card-no-tasks-hint">
-                      <span>📋</span> Click to add your first task
-                    </div>
-                  )}
-
-                  <div className="card-footer">
-                    <span className="card-meta">
-                      Created {formatDate(project.createdAt)}
-                    </span>
-                    <div className="card-actions">
-                      <button
-                        id={`edit-project-${project._id}`}
-                        className="btn btn-secondary btn-sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEditModal(project);
-                        }}
-                      >
-                        ✏️ Edit
-                      </button>
-                      <button
-                        id={`delete-project-${project._id}`}
-                        className="btn btn-danger btn-sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openDeleteConfirm(project._id);
-                        }}
-                      >
-                        🗑️ Delete
-                      </button>
-                    </div>
+          <>
+            {showActiveSection && (
+              <section className="dashboard-section">
+                <div className="section-heading">
+                  <div>
+                    <h2>In Progress</h2>
+                    <p>{activeProjects.length} {activeProjects.length === 1 ? 'project' : 'projects'} currently in progress</p>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+                {activeProjectsToRender.length > 0 ? (
+                  renderProjectCards(activeProjectsToRender)
+                ) : (
+                  <div className="empty-state">
+                    <p>No active projects to show.</p>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {showCompletedSection && (
+              <section className="dashboard-section completed-history-section">
+                <div className="section-heading">
+                  <div>
+                    <h2>
+                      Completed History
+                      <span className="section-badge">History</span>
+                    </h2>
+                    <p>{completedProjects.length} completed {completedProjects.length === 1 ? 'project' : 'projects'}</p>
+                  </div>
+                </div>
+                {completedProjectsToRender.length > 0 ? (
+                  renderProjectCards(completedProjectsToRender)
+                ) : (
+                  <div className="empty-state">
+                    <p>No completed projects yet.</p>
+                  </div>
+                )}
+              </section>
+            )}
+          </>
         )}
       </div>
 
