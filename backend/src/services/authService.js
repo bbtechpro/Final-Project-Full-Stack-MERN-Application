@@ -33,7 +33,7 @@ exports.authenticateUser = async (email, password) => {
 
   const payload = { id: user._id, username: user.username };
   const token = jwt.sign(payload, process.env.JWT_SECRET || 'secretkey', {
-    expiresIn: '24h',
+    expiresIn: '1h',
   });
 
   const userObj = user.toObject();
