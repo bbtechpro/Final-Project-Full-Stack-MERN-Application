@@ -4,7 +4,7 @@ const cookieParser = require('cookie-parser');
 
 // Import Custom Global Middlewares
 const errorHandler = require('./middleware/errorHandler');
-const AppError = require('./utils/AppError');
+const AppError = require('./utils/appError');
 
 // Import Layered Routers
 const authRouter = require('./routes/authRoutes');
