@@ -19,5 +19,6 @@ router.get('/:id', protect, projectController.getProjectById);
 router.post('/', protect, validateProjectCreation, projectController.createProject);
 router.put('/:id', protect, validateProjectCreation, projectController.updateProject);
 router.delete('/:id', protect, validateProjectCreation, projectController.deleteProject);
+router.patch('/:id/status', protect, projectController.toggleStatus);
 
 module.exports = router;

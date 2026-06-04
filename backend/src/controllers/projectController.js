@@ -49,3 +49,16 @@ exports.deleteProject = catchAsync(async (req, res) => {
   await projectService.removeProject(projectId, userId);
   return res.status(200).json({ success: true, message: 'Project deleted successfully' });
 });
+
+exports.toggleStatus = catchAsync(async (req, res) => {
+  const projectId = req.params.id;
+  const userId = req.user._id;
+  const { status } = req.body;
+
+  if (!['active', 'completed'].includes(status)) {
+    throw new AppError('Status must be active or completed', 400);
+  }
+
+  const updatedProject = await projectService.modifyProject(projectId, userId, { status });
+  return res.status(200).json({ success: true, data: updatedProject });
+});

@@ -3,8 +3,11 @@ const { Project } = require('../models/projectSchema');
 const AppError = require('../utils/AppError');
 
 exports.fetchAllProjects = async (userId) => {
-  // Only return projects owned by the requesting user
-  return await Project.find({ user: userId }).populate('user', 'username email');
+  // Only return projects owned by the requesting user.
+  // Sort so in-progress projects appear first, with completed history ordered by completion date.
+  return await Project.find({ user: userId })
+    .sort({ status: 1, completedAt: -1, createdAt: -1 })
+    .populate('user', 'username email');
 };
 
 exports.fetchProjectById = async (id, userId) => {
@@ -39,6 +42,9 @@ exports.modifyProject = async (projectId, userId, updates) => {
   // Apply updates safely
   if (updates.name !== undefined) project.name = updates.name;
   if (updates.description !== undefined) project.description = updates.description;
+  if (updates.status !== undefined) project.status = updates.status;
+  if (updates.status === 'completed') project.completedAt = new Date();
+  if (updates.status === 'active') project.completedAt = null;
 
   await project.save();
   return project;

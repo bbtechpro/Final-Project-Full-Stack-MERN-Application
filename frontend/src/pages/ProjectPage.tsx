@@ -86,9 +86,9 @@ export const ProjectPage: React.FC = () => {
   const handleLogout = async () => {
     try {
       await auth.logout();
-      navigate('/login');
+      navigate('/');
     } catch {
-      navigate('/login');
+      navigate('/');
     }
   };
 
