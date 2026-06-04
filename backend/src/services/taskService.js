@@ -48,7 +48,7 @@ exports.modifyTask = async ({ taskId, userId, updateData }) => {
 
   // Return the updated document directly
   return await Task.findByIdAndUpdate(taskId, updateData, {
-    new: true,
+    returnDocument: 'after',
     runValidators: true,
   });
 };
