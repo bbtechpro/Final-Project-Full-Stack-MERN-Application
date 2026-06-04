@@ -26,11 +26,11 @@ exports.fetchUserById = async (id) => {
 };
 
 exports.replaceUser = async (id, updates) => {
-  return await User.findByIdAndUpdate(id, updates, { new: true, runValidators: true }).select('-password');
+  return await User.findByIdAndUpdate(id, updates, { returnDocument: 'after', runValidators: true }).select('-password');
 };
 
 exports.modifyUser = async (id, updates) => {
-  return await User.findByIdAndUpdate(id, updates, { new: true, runValidators: true }).select('-password');
+  return await User.findByIdAndUpdate(id, updates, { returnDocument: 'after', runValidators: true }).select('-password');
 };
 
 exports.removeUser = async (id) => {
