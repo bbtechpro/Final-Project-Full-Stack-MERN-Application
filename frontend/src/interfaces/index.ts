@@ -10,10 +10,14 @@ export interface User {
   createdAt: string;
 }
 
+export type ProjectStatus = 'active' | 'completed';
+
 export interface Project {
   _id: string;
   name: string;
   description: string;
+  status: ProjectStatus;
+  completedAt: string | null;
   user: string | Partial<User>;
   createdAt: string;
 }
