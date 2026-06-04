@@ -16,6 +16,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ defaultMode = 'login' }) => 
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
 
   const [formData, setFormData] = useState({
     username: '',
@@ -72,11 +74,25 @@ export const AuthPage: React.FC<AuthPageProps> = ({ defaultMode = 'login' }) => 
     setIsLogin(!isLogin);
     setError(null);
     setSuccessMsg(null);
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setFormData({ username: '', email: '', password: '', confirmPassword: '' });
   };
 
   return (
     <div className="auth-container">
+      {/* Home Navigation */}
+      <div className="auth-navbar">
+        <button
+          id="auth-home-btn"
+          className="btn btn-secondary btn-sm"
+          onClick={() => navigate('/')}
+          aria-label="Navigate to home page"
+        >
+          ← Home
+        </button>
+      </div>
+
       <div className="auth-card">
         <h2 className="auth-title">
           {isLogin ? 'Welcome Back' : 'Create Account'}
@@ -126,13 +142,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({ defaultMode = 'login' }) => 
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-group password-input-group">
             <label htmlFor="password-input" className="form-label">
               Password
             </label>
             <input
               id="password-input"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               name="password"
               value={formData.password}
               onChange={handleInputChange}
@@ -141,16 +157,24 @@ export const AuthPage: React.FC<AuthPageProps> = ({ defaultMode = 'login' }) => 
               minLength={8}
               required
             />
+            <button
+              type="button"
+              className="password-toggle-btn"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? '🙈' : '👁'}
+            </button>
           </div>
 
           {!isLogin && (
-            <div className="form-group">
+            <div className="form-group password-input-group">
               <label htmlFor="confirm-password-input" className="form-label">
                 Confirm Password
               </label>
               <input
                 id="confirm-password-input"
-                type="password"
+                type={showConfirmPassword ? 'text' : 'password'}
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
@@ -158,6 +182,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({ defaultMode = 'login' }) => 
                 placeholder="••••••••"
                 required
               />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowConfirmPassword((prev) => !prev)}
+                aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+              >
+                {showConfirmPassword ? '🙈' : '👁'}
+              </button>
             </div>
           )}
 
