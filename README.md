@@ -54,3 +54,70 @@ Deployed Frontend: [Pro-Tasker-Mission-Control](https://tasker-pro-mission-contr
 
 Deployed Backend: [Pro-Tasker-Mission-Control-Bac](https://tasker-pro-mission-control-bac-563fdce478ba.herokuapp.com/).
 
+[] Add future feture
+^ Drag and Drop
+
+Share a Challenge: Deployment was my biggest challenge dur to using a monorepo and not having the proper file structure.
+
+Share a Success: I learned about using Zod: Zod is a schema declaration and validation library for JavaScript and TypeScript. It allows you to build a "blueprint" (schema) of what your data should look like, and then checks unknown data at runtime to guarantee it matches that blueprint.
+Why Developers Use It
+While tools like TypeScript check your data types during development, they vanish once code is compiled into raw JavaScript. Zod fills this gap by acting as a security guard for live data entering your application from unpredictable external sources.
+Common validation use cases include:
+•	User Input: Verifying web form submissions before processing them.
+•	API Responses: Ensuring an external server payload actually has the exact properties your code expects.
+•	Environment Variables: Confirming crucial server config variables are loaded and formatted correctly.
+•	AI Ecosystems: Parsing unstructured data streams from LLMs into reliable, structured JSON objects.
+
+Project structure:
+
+project-management-app/
+├── backend/
+│   ├── config/          # Database and external connections
+
+│   ├── controllers/     # Request handlers and business logic, request & response handling (The Manager)
+
+│   ├── middleware/      # Auth protection and validation schemas, global error handlers
+
+│   ├── models/          # Mongoose database schemas
+│   ├── routes/          # Express API route definitions, purely endpoint definitions (The Map)
+services/           # Core business & domain logic (The Worker)
+│   ├── server.js        # App entry point
+
+│   └── .env             # Environment variables (secrets)
+└── frontend/            # React application
+└── app.js              # Server initialization and middleware mounting 
+// 1. GLOBAL MIDDLEWARE
+app.use(express.json()); // Parses application/json incoming payloads
+app.use(express.urlencoded({ extended: true })); // Parses URL-encoded bodies
+app.use(cookieParser()); // Parses HTTP-Only cookies for refresh token tracking
+// 2. MOUNT ROUTE MODULES
+app.use('/api/auth', authRouter);     // Login, Register, Logout, Refresh
+app.use('/api/users', userRouter);     // User profiles management
+app.use('/api/projects', projectRouter); // Project creation & retrieval
+app.use('/api', taskRouter);          // Tasks endpoints (handles nested & direct routes)
+// 3. FALLBACK: UNHANDLED ROUTE CATCHER
+// If a request falls through all the routers above.
+// 4. CENTRAL OVERRIDE: GLOBAL ERROR HANDLER
+// MUST BE AT THE VERY BOTTOM OF THE CHAIN
+
+frontend\src\components\Badge.tsx
+frontend\src\components\Button.tsx
+frontend\src\components\ConfirmModal.tsx
+frontend\src\components\Input.tsx
+frontend\src\components\ProtectedRoute.tsx
+
+frontend\src\context\AuthContext.tsx
+
+frontend\src\interfaces\index.ts
+
+frontend\src\pages\AuthPage.tsx
+frontend\src\pages\Dashboard.tsx
+frontend\src\pages\LandingPage.tsx
+frontend\src\pages\ProjectPage.tsx
+
+frontend\src\App.css
+frontend\src\App.tsx
+frontend\src\index.css
+frontend\src\main.tsx
+
+
