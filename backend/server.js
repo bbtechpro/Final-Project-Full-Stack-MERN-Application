@@ -1,6 +1,5 @@
 // server.js
 const mongoose = require('mongoose')
-const app = require('./app');
 const dotenv = require('dotenv');
 const path = require('path');
 // This finds your .env file relative to server.js regardless of where you open your terminal
