@@ -1,6 +1,5 @@
 // server.js
 const mongoose = require('mongoose')
-const dotenv = require('dotenv');
 const path = require('path');
 const app = require('./app');
 const dotenv = require('dotenv');
