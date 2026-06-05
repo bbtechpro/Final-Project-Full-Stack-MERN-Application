@@ -1,6 +1,16 @@
 // app.js
 const express = require('express');
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
+const app = express();
+
+// Read the variable you set in Heroku
+const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:3000'; 
+
+app.use(cors({
+  origin: allowedOrigin,
+  credentials: true // Allow cookies/sessions if your app uses them
+}));
 
 // Import Custom Global Middlewares
 const errorHandler = require('./middleware/errorHandler');
@@ -11,8 +21,6 @@ const authRouter = require('./routes/authRoutes');
 const userRouter = require('./routes/userRoutes');
 const projectRouter = require('./routes/projectRoutes');
 const taskRouter = require('./routes/taskRoutes');
-
-const app = express();
 
 // 1. GLOBAL MIDDLEWARE
 app.use(express.json()); // Parses application/json incoming payloads
